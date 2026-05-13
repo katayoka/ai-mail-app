@@ -252,7 +252,7 @@ ${selectedMail.body || selectedMail.snippet}
 返信文のみ出力。署名は「片岡 容子」。`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
@@ -365,7 +365,7 @@ ${past?'過去スタイル:\n'+past:''}
 ---`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: sys, messages: [{ role: 'user', content: `件名: ${subj}\n指示: ${prompt||subj}` }] })

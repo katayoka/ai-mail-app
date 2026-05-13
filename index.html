@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yoko AI Mail</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; background: #f5f5f5; }
+    #login-screen { display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; gap: 20px; }
+    #login-screen h1 { font-size: 24px; font-weight: 500; }
+    #login-screen p { font-size: 14px; color: #666; }
+    #google-login-btn { padding: 12px 24px; background: #4285F4; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+    #google-login-btn:hover { background: #3367d6; }
+    #app { display: none; }
+  </style>
+</head>
+<body>
+
+<div id="login-screen">
+  <h1>🤖 Yoko AI Mail</h1>
+  <p>Gmailと連携してAIがメール返信を生成します</p>
+  <button id="google-login-btn" onclick="loginWithGoogle()">
+    Googleアカウントでログイン
+  </button>
+</div>
+
+<div id="app">
+  <!-- アプリ本体はapp.jsで動的生成 -->
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

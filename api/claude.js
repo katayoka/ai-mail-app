@@ -15,15 +15,6 @@ export default async function handler(req, res) {
       body: JSON.stringify(req.body),
     });
     const data = await response.json();
-
-    // デバッグ用：レスポンス全体を確認
-    console.log('Anthropic response:', JSON.stringify(data));
-
-    if (!data.content) {
-      res.status(200).json({ error: 'No content in response', detail: data });
-      return;
-    }
-
     res.status(200).json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });

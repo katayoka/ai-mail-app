@@ -255,7 +255,7 @@ ${selectedMail.body || selectedMail.snippet}
     const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
     });
     const data = await res.json();
     // ===== 修正箇所① =====
@@ -371,7 +371,7 @@ ${past?'過去スタイル:\n'+past:''}
     const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: sys, messages: [{ role: 'user', content: `件名: ${subj}\n指示: ${prompt||subj}` }] })
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 1000, system: sys, messages: [{ role: 'user', content: `件名: ${subj}\n指示: ${prompt||subj}` }] })
     });
     const data = await res.json();
     // ===== 修正箇所② =====

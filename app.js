@@ -252,13 +252,16 @@ ${selectedMail.body || selectedMail.snippet}
 返信文のみ出力。署名は「片岡 容子」。`;
 
   try {
-      const res = await fetch('/api/claude', {
+    const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
     });
     const data = await res.json();
-    document.getElementById('reply-text').value = data.content.map(c => c.text||'').join('');
+    // ===== 修正箇所① =====
+    const replyText = data?.content?.map(c => c.text||'').join('') || data?.error || JSON.stringify(data);
+    document.getElementById('reply-text').value = replyText;
+    // ====================
     document.getElementById('reply-thinking').innerHTML = '';
     document.getElementById('fb-area').style.display = 'flex';
   } catch(e) {
@@ -371,7 +374,10 @@ ${past?'過去スタイル:\n'+past:''}
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: sys, messages: [{ role: 'user', content: `件名: ${subj}\n指示: ${prompt||subj}` }] })
     });
     const data = await res.json();
-    document.getElementById('body-input').value = data.content.map(c => c.text||'').join('');
+    // ===== 修正箇所② =====
+    const bodyText = data?.content?.map(c => c.text||'').join('') || data?.error || JSON.stringify(data);
+    document.getElementById('body-input').value = bodyText;
+    // ====================
     document.getElementById('compose-thinking').innerHTML = '<div style="font-size:12px;color:#1D9E75;padding:4px 0">✓ 生成完了。自由に編集できます。</div>';
   } catch(e) {
     document.getElementById('compose-thinking').innerHTML = `<div style="color:red;font-size:12px">エラー: ${e.message}</div>`;

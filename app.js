@@ -3,17 +3,9 @@ const CLIENT_ID = '1045231208496-op1hf0mlg6024u92o1fuf93v6clf35r4.apps.googleuse
 const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.modify';
 const GMAIL_BASE = 'https://gmail.googleapis.com/gmail/v1/users/me';
 
-// ===== モード設定 =====
-// 家族・プライベートと判定するメールアドレスやドメインをここに追加してください
-const FAMILY_ADDRESSES = [
-  // 例: 'mother@gmail.com', 'husband@yahoo.co.jp'
-  // 家族のメールアドレスを追加してください
-];
-
-const FAMILY_DOMAINS = [
-  // 例: 'family.com'
-  // 家族共通ドメインがあれば追加（通常は不要）
-];
+// ===== 家族アドレス =====
+const FAMILY_ADDRESSES = [];
+const FAMILY_DOMAINS = [];
 
 // ===== プロフィール定義 =====
 const PROFILES = {
@@ -51,26 +43,20 @@ let mails = [];
 let selectedMail = null;
 let learningData = JSON.parse(localStorage.getItem('yokoMailLearning') || '[]');
 let currentTone = '丁寧・フォーマル';
-let currentMode = 'work'; // 現在のモード
+let currentMode = 'work';
 
 // ===== モード判定 =====
 function detectMode(emailAddress) {
   if (!emailAddress) return 'work';
   const email = emailAddress.toLowerCase();
-  // メールアドレス完全一致チェック
   for (const addr of FAMILY_ADDRESSES) {
     if (email.includes(addr.toLowerCase())) return 'family';
   }
-  // ドメインチェック
   const domain = email.split('@')[1] || '';
   for (const d of FAMILY_DOMAINS) {
     if (domain === d.toLowerCase()) return 'family';
   }
   return 'work';
-}
-
-function getModeLabel(mode) {
-  return PROFILES[mode].label;
 }
 
 // ===== Google認証 =====
@@ -85,19 +71,14 @@ window.onload = () => {
       await initApp();
     },
   });
-
   const saved = sessionStorage.getItem('gmail_token');
-  if (saved) {
-    accessToken = saved;
-    initApp();
-  }
+  if (saved) { accessToken = saved; initApp(); }
 };
 
 function loginWithGoogle() {
   tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
-// ===== アプリ初期化 =====
 async function initApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
@@ -117,23 +98,12 @@ function renderApp() {
             <div id="user-email" style="font-size:10px;color:#999"></div>
           </div>
         </div>
-
-        <!-- モード表示 -->
-        <div id="mode-indicator" style="padding:6px 10px;border-radius:6px;font-size:12px;font-weight:500;text-align:center;margin-bottom:8px;background:#FBEAF0;color:#993556">
-          💼 仕事モード
-        </div>
-
-        <button onclick="openCompose()" style="width:100%;padding:8px;background:#993556;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;margin-bottom:8px">
-          ✏️ 新規作成
-        </button>
+        <div id="mode-indicator" style="padding:6px 10px;border-radius:6px;font-size:12px;font-weight:500;text-align:center;margin-bottom:8px;background:#FBEAF0;color:#993556">💼 仕事モード</div>
+        <button onclick="openCompose()" style="width:100%;padding:8px;background:#993556;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;margin-bottom:8px">✏️ 新規作成</button>
         <div onclick="showInbox()" style="padding:7px 10px;border-radius:6px;cursor:pointer;font-size:13px;background:#FBEAF0;color:#72243E;font-weight:500">
           📥 受信トレイ <span id="unread-badge" style="background:#993556;color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;margin-left:4px"></span>
         </div>
-        <div style="padding:7px 10px;border-radius:6px;cursor:pointer;font-size:13px;color:#666;margin-top:2px" onclick="logout()">
-          🚪 ログアウト
-        </div>
-
-        <!-- 家族アドレス設定 -->
+        <div style="padding:7px 10px;border-radius:6px;cursor:pointer;font-size:13px;color:#666;margin-top:2px" onclick="logout()">🚪 ログアウト</div>
         <div style="margin-top:12px;padding-top:12px;border-top:1px solid #eee">
           <div style="font-size:11px;color:#999;margin-bottom:6px">🏠 家族アドレス設定</div>
           <div id="family-list" style="font-size:11px;color:#666;margin-bottom:6px"></div>
@@ -142,12 +112,8 @@ function renderApp() {
             <button onclick="addFamilyAddress()" style="padding:4px 8px;background:#1565C0;color:#fff;border:none;border-radius:4px;font-size:11px;cursor:pointer">追加</button>
           </div>
         </div>
-
-        <div style="margin-top:auto;font-size:11px;color:#999;padding:8px">
-          🧠 <span id="learn-count">${learningData.length}</span>件学習済み
-        </div>
+        <div style="margin-top:auto;font-size:11px;color:#999;padding:8px">🧠 <span id="learn-count">${learningData.length}</span>件学習済み</div>
       </div>
-
       <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
         <div id="main-area" style="flex:1;overflow:hidden;display:flex;flex-direction:column"></div>
       </div>
@@ -164,7 +130,6 @@ function addFamilyAddress() {
   const addr = input.value.trim().toLowerCase();
   if (!addr || FAMILY_ADDRESSES.includes(addr)) return;
   FAMILY_ADDRESSES.push(addr);
-  // localStorageに保存
   localStorage.setItem('familyAddresses', JSON.stringify(FAMILY_ADDRESSES));
   input.value = '';
   renderFamilyList();
@@ -178,23 +143,18 @@ function removeFamilyAddress(addr) {
 }
 
 function renderFamilyList() {
-  // localStorageから復元
   const saved = localStorage.getItem('familyAddresses');
   if (saved) {
-    const parsed = JSON.parse(saved);
-    parsed.forEach(addr => {
+    JSON.parse(saved).forEach(addr => {
       if (!FAMILY_ADDRESSES.includes(addr)) FAMILY_ADDRESSES.push(addr);
     });
   }
   const el = document.getElementById('family-list');
   if (!el) return;
-  if (FAMILY_ADDRESSES.length === 0) {
-    el.innerHTML = '<span style="color:#bbb">未設定</span>';
-    return;
-  }
+  if (FAMILY_ADDRESSES.length === 0) { el.innerHTML = '<span style="color:#bbb">未設定</span>'; return; }
   el.innerHTML = FAMILY_ADDRESSES.map(addr => `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0">
-      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px">${addr}</span>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px;font-size:11px">${addr}</span>
       <button onclick="removeFamilyAddress('${addr}')" style="background:none;border:none;color:#999;cursor:pointer;font-size:12px;padding:0 2px">✕</button>
     </div>
   `).join('');
@@ -210,12 +170,9 @@ function updateModeIndicator(mode) {
   el.textContent = p.label;
 }
 
-// ===== ユーザー情報取得 =====
 async function fetchUserProfile() {
   try {
-    const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
+    const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
     const data = await res.json();
     const el = document.getElementById('user-email');
     if (el) el.textContent = data.email || '';
@@ -238,9 +195,7 @@ function showInbox() {
 
 async function loadInbox() {
   try {
-    const res = await fetch(`${GMAIL_BASE}/messages?labelIds=INBOX&maxResults=20`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
+    const res = await fetch(`${GMAIL_BASE}/messages?labelIds=INBOX&maxResults=20`, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (res.status === 401) { logout(); return; }
     const data = await res.json();
     if (!data.messages) { mails = []; renderMailList(); return; }
@@ -252,21 +207,14 @@ async function loadInbox() {
   } catch(e) { console.error(e); }
 }
 
+// ===== メール取得（HTML対応） =====
 async function getMailDetail(id) {
-  const res = await fetch(`${GMAIL_BASE}/messages/${id}?format=full`, {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  });
+  const res = await fetch(`${GMAIL_BASE}/messages/${id}?format=full`, { headers: { Authorization: `Bearer ${accessToken}` } });
   const data = await res.json();
   const h = data.payload.headers;
   const get = name => h.find(x => x.name.toLowerCase() === name)?.value || '';
 
-  let body = '';
-  if (data.payload.body?.data) {
-    body = decodeBase64(data.payload.body.data);
-  } else if (data.payload.parts) {
-    const p = data.payload.parts.find(x => x.mimeType === 'text/plain');
-    if (p?.body?.data) body = decodeBase64(p.body.data);
-  }
+  const body = extractBody(data.payload);
 
   return {
     id: data.id,
@@ -279,6 +227,58 @@ async function getMailDetail(id) {
     snippet: data.snippet,
     unread: data.labelIds?.includes('UNREAD') || false,
   };
+}
+
+// ===== 本文抽出（テキスト優先・HTML対応） =====
+function extractBody(payload) {
+  // 1) まずtext/plainを探す（最優先）
+  const plainText = findPart(payload, 'text/plain');
+  if (plainText) return decodeBase64(plainText);
+
+  // 2) text/plainがなければtext/htmlからタグを除去
+  const htmlText = findPart(payload, 'text/html');
+  if (htmlText) return stripHtml(decodeBase64(htmlText));
+
+  // 3) どちらもなければsnippetで代替
+  return '';
+}
+
+function findPart(payload, mimeType) {
+  // 直接bodyにデータがある場合
+  if (payload.mimeType === mimeType && payload.body?.data) {
+    return payload.body.data;
+  }
+  // partsを再帰的に探す
+  if (payload.parts) {
+    for (const part of payload.parts) {
+      const found = findPart(part, mimeType);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function stripHtml(html) {
+  // コメント・スクリプト・スタイルを除去
+  let text = html
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/tr>/gi, '\n')
+    .replace(/<\/td>/gi, ' ')
+    .replace(/<[^>]+>/g, '')  // 残りのタグを除去
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n')  // 3行以上の空行を2行に
+    .trim();
+  return text;
 }
 
 function decodeBase64(str) {
@@ -316,8 +316,6 @@ function renderMailList() {
 async function openMail(id) {
   selectedMail = mails.find(m => m.id === id);
   if (!selectedMail) return;
-
-  // モード自動判定
   const mode = detectMode(selectedMail.from);
   updateModeIndicator(mode);
   const profile = PROFILES[mode];
@@ -335,7 +333,7 @@ async function openMail(id) {
     <div style="padding:10px 16px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px">
       <button onclick="showInbox()" style="padding:5px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;font-size:12px;cursor:pointer">← 戻る</button>
       <span style="font-size:14px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(selectedMail.subject)}</span>
-      <span style="font-size:11px;padding:3px 8px;border-radius:10px;background:${profile.bgColor};color:${profile.color};font-weight:500">${profile.label}</span>
+      <span style="font-size:11px;padding:3px 8px;border-radius:10px;background:${profile.bgColor};color:${profile.color};font-weight:500;white-space:nowrap">${profile.label}</span>
     </div>
     <div style="padding:16px;overflow-y:auto;flex:1">
       <div style="font-size:12px;color:#666;margin-bottom:12px">From: ${escHtml(selectedMail.from)}<br>Date: ${selectedMail.date}</div>
@@ -491,9 +489,7 @@ function onToInputChange(value) {
 
 function setTone(tone, btn) {
   currentTone = tone;
-  document.querySelectorAll('[onclick^="setTone"]').forEach(b => {
-    b.style.background = '#fff'; b.style.color = '#666';
-  });
+  document.querySelectorAll('[onclick^="setTone"]').forEach(b => { b.style.background = '#fff'; b.style.color = '#666'; });
   btn.style.background = '#FBEAF0'; btn.style.color = '#72243E';
 }
 
@@ -502,7 +498,6 @@ async function generateBody() {
   const subj = document.getElementById('subject-input').value.trim();
   const to = document.getElementById('to-input').value.trim();
   if (!prompt && !subj) return;
-
   const mode = detectMode(to);
   const profile = PROFILES[mode];
   const btn = document.getElementById('gen-btn');
